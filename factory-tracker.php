@@ -674,8 +674,9 @@ add_shortcode('badge_directory', function() {
         <div class="bg-white rounded-xl shadow-lg p-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-6">Verified Companies</h2>
             <?php
-            $paged = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-            $facilities = cra_get_verified_facilities($paged, 50);
+            $paged      = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+            $per_page   = 50;
+            $facilities = cra_get_verified_facilities($paged, $per_page);
 
             if ($facilities): ?>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -716,12 +717,12 @@ add_shortcode('badge_directory', function() {
             </div>
             <nav class="mt-6 flex justify-between">
                 <?php if ($paged > 1): ?>
-                    <a class="text-blue-600" href="?page=<?php echo $paged - 1; ?>">&laquo; Previous</a>
+                    <a class="text-blue-600" href="<?php echo esc_url(add_query_arg('page', $paged - 1)); ?>">&laquo; Previous</a>
                 <?php else: ?>
                     <span></span>
                 <?php endif; ?>
-                <?php if (count($facilities) === 50): ?>
-                    <a class="text-blue-600" href="?page=<?php echo $paged + 1; ?>">Next &raquo;</a>
+                <?php if (count($facilities) === $per_page): ?>
+                    <a class="text-blue-600" href="<?php echo esc_url(add_query_arg('page', $paged + 1)); ?>">Next &raquo;</a>
                 <?php endif; ?>
             </nav>
             <?php else: ?>
