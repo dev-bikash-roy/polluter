@@ -533,6 +533,40 @@ function get_badge_info($badge_type) {
     return $badges[$badge_type] ?? null;
 }
 
+// Fetch verified facilities with pagination and caching
+function cra_get_verified_facilities($page = 1, $per_page = 50) {
+    global $wpdb;
+
+    $page      = max(1, intval($page));
+    $per_page  = max(1, intval($per_page));
+    $offset    = ($page - 1) * $per_page;
+    $cache_key = 'cra_verified_facilities_' . $page;
+
+    $cached = get_transient($cache_key);
+    if ($cached !== false) {
+        return $cached;
+    }
+
+    $badges_table = $wpdb->prefix . 'facility_badges';
+    $query        = $wpdb->prepare(
+        "SELECT f.*, b.badge_type, b.verification_date, b.verification_notes, b.evidence_url
+         FROM {$wpdb->posts} AS f
+         JOIN {$badges_table} AS b ON f.ID = b.facility_id
+         WHERE f.post_type = %s AND f.post_status = %s
+         ORDER BY b.verification_date DESC
+         LIMIT %d OFFSET %d",
+        'facility',
+        'publish',
+        $per_page,
+        $offset
+    );
+
+    $results = $wpdb->get_results($query);
+    set_transient($cache_key, $results, 10 * MINUTE_IN_SECONDS);
+
+    return $results;
+}
+
 // Add badge directory page shortcode
 add_shortcode('badge_directory', function() {
     ob_start();
@@ -640,16 +674,8 @@ add_shortcode('badge_directory', function() {
         <div class="bg-white rounded-xl shadow-lg p-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-6">Verified Companies</h2>
             <?php
-            global $wpdb;
-            $badges_table = $wpdb->prefix . 'facility_badges';
-            $facilities = $wpdb->get_results("
-                SELECT f.*, b.badge_type, b.verification_date, b.verification_notes, b.evidence_url
-                FROM {$wpdb->posts} f
-                JOIN $badges_table b ON f.ID = b.facility_id
-                WHERE f.post_type = 'facility'
-                AND f.post_status = 'publish'
-                ORDER BY b.verification_date DESC
-            ");
+            $paged = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+            $facilities = cra_get_verified_facilities($paged, 50);
 
             if ($facilities): ?>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -688,6 +714,16 @@ add_shortcode('badge_directory', function() {
                 </div>
                 <?php endforeach; ?>
             </div>
+            <nav class="mt-6 flex justify-between">
+                <?php if ($paged > 1): ?>
+                    <a class="text-blue-600" href="?page=<?php echo $paged - 1; ?>">&laquo; Previous</a>
+                <?php else: ?>
+                    <span></span>
+                <?php endif; ?>
+                <?php if (count($facilities) === 50): ?>
+                    <a class="text-blue-600" href="?page=<?php echo $paged + 1; ?>">Next &raquo;</a>
+                <?php endif; ?>
+            </nav>
             <?php else: ?>
             <div class="text-center py-12 bg-gray-50 rounded-lg">
                 <p class="text-gray-600">No verified facilities yet. Check back soon!</p>
