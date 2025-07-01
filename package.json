@@ -1,0 +1,11 @@
+{
+  "name": "cleanrecovery-final",
+  "version": "1.0.0",
+  "description": "Tailwind build for Clean Recovery Final WordPress site.",
+  "scripts": {
+    "build:tailwind": "npx tailwindcss -i ./css/tailwind-source.css -o ./css/tailwind.min.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

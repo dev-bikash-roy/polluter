@@ -1,0 +1,4 @@
+
+#factory-map { border: 2px solid #ddd; }
+.facility-item { cursor: pointer; }
+.facility-item:hover { background: #f0f0f0; }
